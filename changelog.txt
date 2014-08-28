@@ -1,0 +1,5 @@
+1.0.0
+Initial release with features:
+- Shows Sync flag when filename matches
+- Manual search
+- Search based on cleaning up movie title
