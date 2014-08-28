@@ -54,37 +54,6 @@ def log(module, msg):
 
 
 
-def find_tv_show_season(content, tvshow, season):
-    url_found = None
-    possible_matches = []
-    all_tvshows = []
-
-    h = HTMLParser.HTMLParser()
-    for matches in re.finditer(movie_season_pattern, content, re.IGNORECASE | re.DOTALL):
-        found_title = matches.group('title')
-        found_title = h.unescape(found_title)
-
-        log(__name__, "Found tv show season on search page: %s" % found_title)
-        s = difflib.SequenceMatcher(None, string.lower(found_title + ' ' + matches.group('year')), string.lower(tvshow))
-        all_tvshows.append(matches.groups() + (s.ratio() * int(matches.group('numsubtitles')),))
-        if string.find(string.lower(found_title), string.lower(tvshow) + " ") > -1:
-            if string.find(string.lower(found_title), string.lower(season)) > -1:
-                log(__name__, "Matching tv show season found on search page: %s" % found_title)
-                possible_matches.append(matches.groups())
-
-    if len(possible_matches) > 0:
-        possible_matches = sorted(possible_matches, key=lambda x: -int(x[3]))
-        url_found = possible_matches[0][0]
-        log(__name__, "Selecting matching tv show with most subtitles: %s (%s)" % (
-            possible_matches[0][1], possible_matches[0][3]))
-    else:
-        if len(all_tvshows) > 0:
-            all_tvshows = sorted(all_tvshows, key=lambda x: -int(x[4]))
-            url_found = all_tvshows[0][0]
-            log(__name__, "Selecting tv show with highest fuzzy string score: %s (score: %s subtitles: %s)" % (
-                all_tvshows[0][1], all_tvshows[0][4], all_tvshows[0][3]))
-
-    return url_found
 
 
 def append_subtitles(items):
@@ -114,6 +83,7 @@ def append_subtitles(items):
 
 
 def search(item):
+    res = []
     filename = os.path.splitext(os.path.basename(item['file_original_path']))[0]
     log(__name__, "Search_thaisubtitle='%s', filename='%s', addon_version=%s" % (item, filename, __version__))
 
@@ -121,23 +91,23 @@ def search(item):
         res = search_manual(item['mansearchstr'], item['3let_language'], filename)
         append_subtitles(res)
         return
-    #elif item['tvshow']:
-    #    search_tvshow(item['tvshow'], item['season'], item['episode'], item['3let_language'], filename)
+    elif item['tvshow']:
+        res = search_tvshow(item['tvshow'], item['season'], item['episode'], item['3let_language'], filename)
     #elif item['title'] and item['year']:
     #    search_movie(item['title'], item['year'], item['3let_language'], filename)
     #else:
     title, year = xbmc.getCleanMovieTitle(filename)
     log(__name__, "clean title: \"%s\" (%s)" % (title, year))
-    res = []
-    try:
-        yearval = int(year)
-    except ValueError:
-        yearval = 0
-    if title and yearval > 1900:
-        res = search_manual(title, item['3let_language'], filename)
-        def same_movie(res):
-             return title, year == xbmc.getCleanMovieTitle(filename)
-        res = [r for r in res if same_movie(r)]
+    if not res:
+        try:
+            yearval = int(year)
+        except ValueError:
+            yearval = 0
+        if title and yearval > 1900:
+            res = search_manual(title, item['3let_language'], filename)
+            def same_movie(res):
+                 return title, year == xbmc.getCleanMovieTitle(filename)
+            res = [r for r in res if same_movie(r)]
     if not res:
         match = re.search(r'\WS(?P<season>\d\d)E(?P<episode>\d\d)', title, flags=re.IGNORECASE)
         if match is not None:

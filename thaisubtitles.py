@@ -1,4 +1,5 @@
 from cStringIO import StringIO
+from pprint import pprint
 from urlparse import urljoin
 import xml.etree.ElementTree as et
 import string
@@ -12,14 +13,16 @@ from BeautifulSoup import BeautifulSoup
 try:
     import xbmc
     DEBUG = False
+    from service import log
 except:
     DEBUG = False
+
+    def log(module, msg):
+        print msg
 
 MAIN_URL = "http://www.thaisubtitle.com"
 
 
-def log(msg, lvel):
-    pass
 
 
 def prepare_search_string(s):
@@ -79,23 +82,10 @@ def search_movie(title, year, languages, filename):
 
 def search_tvshow(tvshow, season, episode, languages, filename):
     tvshow = string.strip(tvshow)
-    search_string = prepare_search_string(tvshow)
-    search_string += " - " + seasons[int(season)] + " Season"
 
+    search_string = "%s s%#02de%#02d" % (prepare_search_string(tvshow), int(season), int(episode))
     log(__name__, "Search tvshow = %s" % search_string)
-    url = MAIN_URL + "/subtitles/title?q=" + urllib.quote_plus(search_string) + '&r=true'
-    content, response_url = geturl(url)
-
-    if content is not None:
-        log(__name__, "Multiple tv show seasons found, searching for the right one ...")
-        tv_show_seasonurl = find_tv_show_season(content, tvshow, seasons[int(season)])
-        if tv_show_seasonurl is not None:
-            log(__name__, "Tv show season found in list, getting subs ...")
-            url = MAIN_URL + tv_show_seasonurl
-            content, response_url = geturl(url)
-            if content is not None:
-                search_string = "s%#02de%#02d" % (int(season), int(episode))
-                getallsubs(content, languages, filename, search_string)
+    return search_manual(search_string, languages, filename)
 
 
 def search_manual(searchstr, languages, filename):
@@ -132,31 +122,39 @@ def getallsubs(content, allowed_languages, filename="", search_string=""):
         num, title, rating, translate, upload, download = element.findAll("td")
         subtitle_name = title.find('br').previousSibling.strip().strip(" [En]")
         rating = int(float(rating.getText().strip('%'))/100.0*5)
-        th_link = download.fetch("img",{'title':'Download Thai Subtitle'})[0].parent['href']
-        th_link = urljoin(MAIN_URL + "/manage/", th_link)
-        en_link = download.fetch("img",{'title':'Download English Subtitle'})[0].parent['href']
-        en_link = urljoin(MAIN_URL + "/manage/", en_link)
-        th_code = ("Thai", "0", "th", "tha", "41", 30243)
-        en_code = ("English", "2", "en", "eng", "11", 30212)
-
+        # rating is really the completeness. 0 means no thai, so not point showing it
+        if rating < 1:
+            continue
         sync = False
         if filename != "" and string.lower(filename) == string.lower(subtitle_name):
             sync = True
 
-        for code, link in [(th_code, th_link), (en_code, en_link)]:
-            lang_name, _, let2, let3, _, _  = code
-            if let3 in allowed_languages:
-                lang = {'name': lang_name, '2let': let2, '3let': let3}
+        for lang_name, _, let2, let3, _, _  in [
+            ("Thai", "0", "th", "tha", "41", 30243),
+            ("English", "2", "en", "eng", "11", 30212)
+        ]:
+            if let3 not in allowed_languages:
+                continue
+            link = download.fetch("img",{'title':'Download %s Subtitle'%lang_name})[0].parent['href']
+            link = urljoin(MAIN_URL + "/manage/", link)
+            lang = {'name': lang_name, '2let': let2, '3let': let3}
 
-                subtitles.append({'rating': str(rating),
-                                  'filename': subtitle_name,
-                                  'sync': sync,
-                                  'link': link,
-                                  'lang': lang,
-                                  'hearing_imp': False})
+            subtitles.append({'rating': str(rating),
+                              'filename': subtitle_name,
+                              'sync': sync,
+                              'link': link,
+                              'lang': lang,
+                              'hearing_imp': False})
 
 #    subtitles.sort(key=lambda x: [not x['sync']])
     return subtitles
 
 if __name__ == "__main__":
-    print search_manual(sys.argv[1], "tha", sys.argv[2])
+    try:
+        _, filename, search = sys.argv
+    except:
+        _, filename = sys.argv
+        search = filename
+
+
+    pprint(search_manual(search, "tha", filename))
