@@ -1,10 +1,9 @@
-from cStringIO import StringIO
+#from cStringIO import StringIO
 from pprint import pprint
 from urlparse import urljoin
-import xml.etree.ElementTree as et
+#import xml.etree.ElementTree as et
 import string
 import sys
-import ElementSoup
 import re
 import urllib2
 import urllib
@@ -80,13 +79,6 @@ def search_movie(title, year, languages, filename):
                     log(__name__, "Movie not found in list: %s" % title)
 
 
-def search_tvshow(tvshow, season, episode, languages, filename):
-    tvshow = string.strip(tvshow)
-
-    search_string = "%s s%#02de%#02d" % (prepare_search_string(tvshow), int(season), int(episode))
-    log(__name__, "Search tvshow = %s" % search_string)
-    return search_manual(search_string, languages, filename)
-
 
 def search_manual(searchstr, languages, filename):
     search_string = prepare_search_string(searchstr)
@@ -98,6 +90,8 @@ def search_manual(searchstr, languages, filename):
 
     if content is not None:
         return getallsubs(content, languages, filename)
+    else:
+        return []
 
 
 def getallsubs(content, allowed_languages, filename="", search_string=""):

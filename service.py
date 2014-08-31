@@ -23,7 +23,7 @@ import re
 import string
 import difflib
 import HTMLParser
-from thaisubtitles import getallsubs, search_manual, search_movie, search_tvshow
+from thaisubtitles import getallsubs, search_manual, search_movie
 
 __addon__ = xbmcaddon.Addon()
 __author__ = __addon__.getAddonInfo('author')
@@ -79,7 +79,12 @@ def append_subtitles(items):
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=url, listitem=listitem, isFolder=False)
 
 
+def search_tvshow(tvshow, season, episode, languages, filename):
+    tvshow = string.strip(tvshow)
 
+    search_string = "%s s%#02de%#02d" % (tvshow, int(season), int(episode))
+    log(__name__, "Search tvshow = %s" % search_string)
+    return search_manual(search_string, languages, filename)
 
 
 def search(item):
@@ -114,8 +119,7 @@ def search(item):
             tvshow = string.strip(title[:match.start('season')-1])
             season = string.lstrip(match.group('season'), '0')
             episode = string.lstrip(match.group('episode'), '0')
-            #res = search_tvshow(tvshow, season, episode, item['3let_language'], filename)
-            res = search_manual(tvshow, item['3let_language'], filename)
+            res = search_tvshow(tvshow, season, episode, item['3let_language'], filename)
     if not res:
             res = search_manual(filename, item['3let_language'], filename)
     append_subtitles(res)
@@ -221,6 +225,7 @@ if params['action'] == 'search' or params['action'] == 'manualsearch':
     item['title'] = normalizeString(xbmc.getInfoLabel("VideoPlayer.OriginalTitle"))  # try to get original title
     item['file_original_path'] = urllib.unquote(xbmc.Player().getPlayingFile().decode('utf-8'))  # Full path
     item['3let_language'] = []
+    preferred_language = params['preferredlanguage'].decode('utf-8') if 'preferredlanguage' in params else None
 
     if 'searchstring' in params:
         item['mansearch'] = True
@@ -228,6 +233,9 @@ if params['action'] == 'search' or params['action'] == 'manualsearch':
 
     for lang in urllib.unquote(params['languages']).decode('utf-8').split(","):
         item['3let_language'].append(xbmc.convertLanguage(lang, xbmc.ISO_639_2))
+    if preferred_language:
+        log('Using preferred language: %s' % preferred_language)
+        item['3let_language'].append(xbmc.convertLanguage(preferred_language, xbmc.ISO_639_2))
 
     if item['title'] == "":
         item['title'] = normalizeString(xbmc.getInfoLabel("VideoPlayer.Title"))      # no original title, get just Title
