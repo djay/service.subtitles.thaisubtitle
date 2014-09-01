@@ -103,8 +103,10 @@ def search_movie(title, year, languages, filename):
     for result in res:
         rtitle, ryear = xbmc.getCleanMovieTitle(result['filename'])
         rtitle, ryear = rtitle.strip().lower(), ryear.strip().lower()
+        log(__name__, "Got cleaned movie result of %s (%s) '%s'" % (rtitle, ryear, result['filename']))
         if (rtitle, ryear) == (title, year):
             yield result
+        #TODO we should really return those that don't match the year in case all else fails
 
 
 def search(item):
@@ -131,7 +133,7 @@ def search(item):
     except ValueError:
         yearval = 0
     if title and yearval > 1900:
-        res = search_manual(title, item['3let_language'], filename, lambda f: same_movie(f, item))
+        res = search_movie(title, year, item['3let_language'], filename)
         if res:
             return append_subtitles(res)
     match = re.search(r'\WS(?P<season>\d\d)E(?P<episode>\d\d)', title, flags=re.IGNORECASE)
@@ -144,7 +146,9 @@ def search(item):
             return append_subtitles(res)
     # last fall back
     res = search_manual(filename, item['3let_language'], filename)
-    return append_subtitles(res)
+    if res:
+        return append_subtitles(res)
+    return []
 
 
 def download(link, search_string=""):
