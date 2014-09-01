@@ -84,7 +84,27 @@ def search_tvshow(tvshow, season, episode, languages, filename):
 
     search_string = "%s s%#02de%#02d" % (tvshow, int(season), int(episode))
     log(__name__, "Search tvshow = %s" % search_string)
-    return search_manual(search_string, languages, filename)
+    res = search_manual(search_string, languages, filename)
+    if res:
+        return res
+    # try and be less exact
+    search_string = "%s %i %i" % (tvshow, int(season), int(episode))
+    log(__name__, "Search tvshow = %s" % search_string)
+    res = search_manual(search_string, languages, filename)
+    return res
+
+
+
+def search_movie(title, year, languages, filename):
+    title = string.strip(title)
+
+    log(__name__, "Search movie = %s" % title)
+    res = search_manual(title, languages, filename)
+    for result in res:
+        rtitle, ryear = xbmc.getCleanMovieTitle(result['filename'])
+        rtitle, ryear = rtitle.strip().lower(), ryear.strip().lower()
+        if (rtitle, ryear) == (title, year):
+            yield result
 
 
 def search(item):
@@ -94,35 +114,37 @@ def search(item):
 
     if item['mansearch']:
         res = search_manual(item['mansearchstr'], item['3let_language'], filename)
-        append_subtitles(res)
-        return
+        return append_subtitles(res)
     elif item['tvshow']:
         res = search_tvshow(item['tvshow'], item['season'], item['episode'], item['3let_language'], filename)
-    #elif item['title'] and item['year']:
-    #    search_movie(item['title'], item['year'], item['3let_language'], filename)
-    #else:
+        if res:
+            return append_subtitles(res)
+    elif item['title'] and item['year']:
+        res = search_manual(item['title'], item['3let_language'], filename, )
+        if res:
+            return append_subtitles(res)
+
     title, year = xbmc.getCleanMovieTitle(filename)
     log(__name__, "clean title: \"%s\" (%s)" % (title, year))
-    if not res:
-        try:
-            yearval = int(year)
-        except ValueError:
-            yearval = 0
-        if title and yearval > 1900:
-            res = search_manual(title, item['3let_language'], filename)
-            def same_movie(res):
-                 return title, year == xbmc.getCleanMovieTitle(filename)
-            res = [r for r in res if same_movie(r)]
-    if not res:
-        match = re.search(r'\WS(?P<season>\d\d)E(?P<episode>\d\d)', title, flags=re.IGNORECASE)
-        if match is not None:
-            tvshow = string.strip(title[:match.start('season')-1])
-            season = string.lstrip(match.group('season'), '0')
-            episode = string.lstrip(match.group('episode'), '0')
-            res = search_tvshow(tvshow, season, episode, item['3let_language'], filename)
-    if not res:
-            res = search_manual(filename, item['3let_language'], filename)
-    append_subtitles(res)
+    try:
+        yearval = int(year)
+    except ValueError:
+        yearval = 0
+    if title and yearval > 1900:
+        res = search_manual(title, item['3let_language'], filename, lambda f: same_movie(f, item))
+        if res:
+            return append_subtitles(res)
+    match = re.search(r'\WS(?P<season>\d\d)E(?P<episode>\d\d)', title, flags=re.IGNORECASE)
+    if match is not None:
+        tvshow = string.strip(title[:match.start('season')-1])
+        season = string.lstrip(match.group('season'), '0')
+        episode = string.lstrip(match.group('episode'), '0')
+        res = search_tvshow(tvshow, season, episode, item['3let_language'], filename)
+        if res:
+            return append_subtitles(res)
+    # last fall back
+    res = search_manual(filename, item['3let_language'], filename)
+    return append_subtitles(res)
 
 
 def download(link, search_string=""):
@@ -246,6 +268,8 @@ if params['action'] == 'search' or params['action'] == 'manualsearch':
 
     if item['file_original_path'].find("http") > -1:
         item['temp'] = True
+        # Not sure why its double quoted
+        item['file_original_path'] = urlparse.unquote(item['file_original_path'])
 
     elif item['file_original_path'].find("rar://") > -1:
         item['rar'] = True

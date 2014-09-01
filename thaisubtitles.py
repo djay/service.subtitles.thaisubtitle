@@ -140,6 +140,7 @@ def getallsubs(content, allowed_languages, filename="", search_string=""):
                               'lang': lang,
                               'hearing_imp': False})
 
+    log(__name__, "got %s results" % len(subtitles))
 #    subtitles.sort(key=lambda x: [not x['sync']])
     return subtitles
 
