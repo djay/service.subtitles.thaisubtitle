@@ -115,10 +115,7 @@ def getallsubs(content, allowed_languages, filename="", search_string=""):
     for element in table.findAll("tr")[1:]:
         num, title, rating, translate, upload, download = element.findAll("td")
         subtitle_name = title.find('br').previousSibling.strip().strip(" [En]")
-        rating = int(float(rating.getText().strip('%'))/100.0*5)
-        # rating is really the completeness. 0 means no thai, so not point showing it
-        if rating < 1:
-            continue
+        rating = int(round(float(rating.getText().strip('%'))/100.0*5))
         sync = False
         if filename != "" and string.lower(filename) == string.lower(subtitle_name):
             sync = True
@@ -129,6 +126,10 @@ def getallsubs(content, allowed_languages, filename="", search_string=""):
         ]:
             if let3 not in allowed_languages:
                 continue
+            # rating is really the completeness. 0 means no thai, so not point showing it
+            if let3 == 'tha' and rating < 1:
+                continue
+                
             link = download.fetch("img",{'title':'Download %s Subtitle'%lang_name})[0].parent['href']
             link = urljoin(MAIN_URL + "/manage/", link)
             lang = {'name': lang_name, '2let': let2, '3let': let3}
