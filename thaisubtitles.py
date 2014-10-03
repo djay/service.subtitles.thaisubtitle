@@ -129,7 +129,7 @@ def getallsubs(content, allowed_languages, filename="", search_string=""):
             # rating is really the completeness. 0 means no thai, so not point showing it
             if let3 == 'tha' and rating < 1:
                 continue
-                
+
             link = download.fetch("img",{'title':'Download %s Subtitle'%lang_name})[0].parent['href']
             link = urljoin(MAIN_URL + "/manage/", link)
             lang = {'name': lang_name, '2let': let2, '3let': let3}
