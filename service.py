@@ -157,7 +157,7 @@ def download(link, search_string=""):
     response = urllib2.urlopen(link)
 
     if xbmcvfs.exists(__temp__):
-        shutil.rmtree(__temp__)
+        shutil.rmtree(__temp__, ignore_errors=True)
     xbmcvfs.mkdirs(__temp__)
 
     local_tmp_file = os.path.join(__temp__, "thaisubtitle.xxx")
