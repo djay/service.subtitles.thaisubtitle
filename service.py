@@ -73,7 +73,7 @@ def rmdirRecursive(dir):
     try:
         dir = unicode(dir, "utf-8")
     except:
-        log.msg("rmdirRecursive: decoding from UTF-8 failed")
+        log(__name__, "rmdirRecursive: decoding from UTF-8 failed")
 
     for name in os.listdir(dir):
         full_name = os.path.join(dir, name)
