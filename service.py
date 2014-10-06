@@ -157,7 +157,7 @@ def download(link, search_string=""):
     response = urllib2.urlopen(link)
 
     if xbmcvfs.exists(__temp__):
-        shutil.rmtree(__temp__, ignore_errors=True)
+        rmdirRecursive(__temp__)
     xbmcvfs.mkdirs(__temp__)
 
     local_tmp_file = os.path.join(__temp__, "thaisubtitle.xxx")
@@ -298,7 +298,50 @@ elif params['action'] == 'download':
         xbmcplugin.addDirectoryItem(handle=int(sys.argv[1]), url=sub, listitem=listitem, isFolder=False)
 
 xbmcplugin.endOfDirectory(int(sys.argv[1]))  # send end of directory to XBMC
-  
+
+
+# from http://trac.buildbot.net/ticket/485
+def rmdirRecursive(dir):
+    """This is a replacement for shutil.rmtree that works better under
+    windows. Thanks to Bear at the OSAF for the code."""
+    if not os.path.exists(dir):
+        return
+
+    if os.path.islink(dir):
+        os.remove(dir)
+        return
+
+    # Verify the directory is read/write/execute for the current user
+    os.chmod(dir, 0700)
+
+    # os.listdir below only returns a list of unicode filenames if the parameter is unicode
+    # Thus, if a non-unicode-named dir contains a unicode filename, that filename will get garbled.
+    # So force dir to be unicode.
+    try:
+        dir = unicode(dir, "utf-8")
+    except:
+        log.msg("rmdirRecursive: decoding from UTF-8 failed")
+
+    for name in os.listdir(dir):
+        full_name = os.path.join(dir, name)
+        # on Windows, if we don't have write permission we can't remove
+        # the file/directory either, so turn that on
+        if os.name == 'nt':
+            if not os.access(full_name, os.W_OK):
+                # I think this is now redundant, but I don't have an NT
+                # machine to test on, so I'm going to leave it in place
+                # -warner
+                os.chmod(full_name, 0600)
+
+        if os.path.islink(full_name):
+            os.remove(full_name) # as suggested in bug #792
+        elif os.path.isdir(full_name):
+            rmdirRecursive(full_name)
+        else:
+            if os.path.isfile(full_name):
+                os.chmod(full_name, 0700)
+            os.remove(full_name)
+    os.rmdir(dir)
   
   
   
