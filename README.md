@@ -16,6 +16,8 @@ Installation
 Currently not in a repo so git clone into your plugins directory and restart XBMC. The plugin
 should appear in your subtitle download menu.
 
+Alternatively you can use the [instructions to install an addon from a zip file](http://wiki.xbmc.org/index.php?title=Add-on_manager#How_to_install_from_a_ZIP_file), after you download [service.subtitles.thaisubtitle.zip](https://github.com/djay/service.subtitles.thaisubtitle/archive/master.zip?file=service.subtitles.thaisubtitle.zip)
+
 How to contribute
 -----------------
 
