@@ -71,15 +71,17 @@ def rmdirRecursive(dir):
     # Thus, if a non-unicode-named dir contains a unicode filename, that filename will get garbled.
     # So force dir to be unicode.
     try:
-        dir = unicode(dir, "utf-8")
+        dir = dir.decode('utf8','ignore')
     except:
         log(__name__, "rmdirRecursive: decoding from UTF-8 failed: %s" % dir)
+        return
 
     for name in os.listdir(dir):
         try:
-            name = unicode(name, "utf-8")
+            name = name.decode('utf8','ignore')
         except:
             log(__name__, "rmdirRecursive: decoding from UTF-8 failed: %s" % name)
+            continue
         full_name = os.path.join(dir, name)
         # on Windows, if we don't have write permission we can't remove
         # the file/directory either, so turn that on
