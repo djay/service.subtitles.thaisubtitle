@@ -60,8 +60,8 @@ def rmdirRecursive(dir):
     if not os.path.exists(dir):
         return
 
-    if os.path.islink(dir):
-        os.remove(dir)
+    if os.path.islink(dir.encode('utf8')):
+        os.remove(dir.encode('utf8'))
         return
 
     # Verify the directory is read/write/execute for the current user
@@ -73,9 +73,13 @@ def rmdirRecursive(dir):
     try:
         dir = unicode(dir, "utf-8")
     except:
-        log(__name__, "rmdirRecursive: decoding from UTF-8 failed")
+        log(__name__, "rmdirRecursive: decoding from UTF-8 failed: %s" % dir)
 
     for name in os.listdir(dir):
+        try:
+            name = unicode(name, "utf-8")
+        except:
+            log(__name__, "rmdirRecursive: decoding from UTF-8 failed: %s" % name)
         full_name = os.path.join(dir, name)
         # on Windows, if we don't have write permission we can't remove
         # the file/directory either, so turn that on
