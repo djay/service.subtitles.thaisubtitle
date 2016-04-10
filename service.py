@@ -308,7 +308,7 @@ if params['action'] == 'search' or params['action'] == 'manualsearch':
     for lang in urllib.unquote(params['languages']).decode('utf-8').split(","):
         item['3let_language'].append(xbmc.convertLanguage(lang, xbmc.ISO_639_2))
     if preferred_language:
-        log('Using preferred language: %s' % preferred_language)
+        log('main','Using preferred language: %s' % preferred_language)
         item['3let_language'].append(xbmc.convertLanguage(preferred_language, xbmc.ISO_639_2))
 
     if item['title'] == "":

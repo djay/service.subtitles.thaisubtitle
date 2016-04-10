@@ -113,7 +113,7 @@ def getallsubs(content, allowed_languages, filename="", search_string=""):
         return []
 
     for element in table.findAll("tr")[1:]:
-        num, title, rating, translate, upload, download = element.findAll("td")
+        num, title, edit, rating, translate, upload, download = element.findAll("td")
         subtitle_name = title.find('br').previousSibling.strip().strip(" [En]")
         rating = int(round(float(rating.getText().strip('%'))/100.0*5))
         sync = False
