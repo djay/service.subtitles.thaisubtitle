@@ -27,6 +27,7 @@ MAIN_URL = "http://www.thaisubtitle.com"
 def prepare_search_string(s):
     s = string.strip(s)
     s = re.sub(r'\(\d\d\d\d\)$', '', s)  # remove year from title
+    s = re.sub("[\(\)\&_\-,!.;\\\[\]\:\"]", ' ', s)
     return s
 
 

@@ -194,7 +194,8 @@ def search(item):
         if res:
             return append_subtitles(res)
     # last fall back
-    res = search_manual(filename, item['3let_language'], filename)
+    if len(filename) < 30:
+        res = search_manual(filename, item['3let_language'], filename)
     if res:
         return append_subtitles(res)
     return []
