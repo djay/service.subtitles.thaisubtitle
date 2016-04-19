@@ -58,6 +58,7 @@ def rmdirRecursive(dir):
     """This is a replacement for shutil.rmtree that works better under
     windows. Thanks to Bear at the OSAF for the code."""
     if not os.path.exists(dir):
+        log(__name__, "rmdirRecursive: dir doesn't exit")
         return
 
     if os.path.islink(dir.encode('utf8')):
@@ -204,7 +205,7 @@ def download(link, search_string=""):
     subtitle_list = []
     response = urllib2.urlopen(link)
 
-    if xbmcvfs.exists(__temp__):
+    if os.path.exists(__temp__):
         rmdirRecursive(__temp__)
     xbmcvfs.mkdirs(__temp__)
 
@@ -251,6 +252,14 @@ def download(link, search_string=""):
             if search_string and string.find(string.lower(file), string.lower(search_string)) == -1:
                 continue
             log(__name__, "=== returning subtitle file %s" % file)
+
+            # Convert file to utf8 from TIS-620
+            f = open(file, 'r+')
+            text = f.read().decode('TIS-620').encode('utf-8')
+            f.seek(0)
+            f.write(text)
+            f.close()
+
             subtitle_list.append(file)
 
     if len(subtitle_list) == 0:
